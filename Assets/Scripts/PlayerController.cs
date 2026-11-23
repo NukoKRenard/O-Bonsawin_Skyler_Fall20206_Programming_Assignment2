@@ -6,7 +6,9 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     public float maxSpeed = 30.0f;
-    public float accelerationMetersASecondSquared = 5.0f;
+    public float accelerationTime = 1.0f;
+    public float decelerationTime = 5.0f;
+
     private Rigidbody2D body;
     private Vector2 playerInput;
     public enum FacingDirection {
@@ -40,10 +42,20 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-	    body.linearVelocity = body.linearVelocity+playerInput*accelerationMetersASecondSquared*Time.fixedDeltaTime;
+	    if (IsWalking())
+		    body.linearVelocity += new Vector2((maxSpeed/accelerationTime)*playerInput.x,0)*Time.fixedDeltaTime;
+	    else if (IsGrounded())
+	    {
+		    Vector2 beforeVelocity = body.linearVelocity;
+		    Vector2 afterVelocity = body.linearVelocity - new Vector2((maxSpeed/decelerationTime)*body.linearVelocity.normalized.x,0)*Time.fixedDeltaTime;
+		    if (beforeVelocity.x*afterVelocity.x<0)
+			    body.linearVelocity = new Vector2(0,body.linearVelocity.y);
+		    else
+			    body.linearVelocity = afterVelocity;
+	    }
 
-	    if (body.linearVelocity.magnitude>maxSpeed)
-		    body.linearVelocity = body.linearVelocity.normalized*maxSpeed;
+	    if (Mathf.Abs(body.linearVelocity.x)>maxSpeed)
+		    body.linearVelocity = new Vector2(Mathf.Abs(body.linearVelocity.x)/body.linearVelocity.x*maxSpeed,body.linearVelocity.y);
     }
 
     public bool IsWalking()
